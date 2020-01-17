@@ -1,10 +1,10 @@
 ## Marching Cube C++
-A public domain header-only marching cube implementation in C++, without anything fancy. Only dependencies are <cmath> and <vector> headers.
+A public domain header-only marching cube implementation in C++ without anything fancy. Only dependencies are cmath and vector headers.
 I could get rid of vector and just use plain arrays, but it is more convenient for my personal projects to keep that way, though one could 
 easily modify the implementation.
 
-Note that calling the main function marching_cube() may allocate a lot memory, depending on the resolution of your data. The function creates
-an indexed mesh having vertices, normals and indexes properly defined in their own arrays.
+Note that calling the main function marching_cube() may allocate a lot of memory depending on the resolution of your data. The function 
+creates an indexed mesh with vertices, normals and indexes defined in their own arrays.
 
 You can optionally enable double precision by defining MC_CPP_USE_DOUBLE_PRECISION before including the header.
 
@@ -33,4 +33,4 @@ int main()
 ```
 
 ## Licence
-Public domain.
+Public domain
