@@ -8,6 +8,10 @@ creates an indexed mesh with vertices, normals and indexes defined in their own 
 
 You can optionally enable double precision by defining MC_CPP_USE_DOUBLE_PRECISION before including the header.
 
+This work was motivated by this implementation of the marching cube: https://github.com/nsf/mc
+which gives a fully runnable example in OpenGL. I thought it could be heavily simplified and could make a good
+header only library.
+
 ## Use
 First define MC_CPP_ENABLE and then include MC.h in your project. Example:
 ```
