@@ -32,5 +32,8 @@ int main()
 }
 ```
 
+You may find a complete example in main.cpp file. Running the program in the repository will output an obj file showing the isosurface
+of a single perlin noise octave.
+
 ## Licence
 Public domain
