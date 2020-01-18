@@ -11,7 +11,7 @@ typedef double MC_FLOAT;
 typedef float MC_FLOAT;
 #endif
 
-typedef struct mcVec3 {
+typedef struct mcVec3f {
 public:
 	union {
 		MC_FLOAT v[3];
@@ -19,10 +19,47 @@ public:
 			MC_FLOAT x, y, z;
 		};
 	};
-	mcVec3& operator+=(const mcVec3& r) { x += r.x; y += r.y; z += r.z; return *this; }
-	mcVec3& operator-=(const mcVec3& r) { x -= r.x; y -= r.y; z -= r.z; return *this; }
-	MC_FLOAT& operator[](int i) { return v[i]; }
-} mcVec3;
+	inline mcVec3f& operator+=(const mcVec3f& r)
+	{
+		x += r.x; y += r.y; z += r.z; 
+		return *this; 
+	}
+	inline mcVec3f& operator-=(const mcVec3f& r) 
+	{ 
+		x -= r.x; y -= r.y; z -= r.z; 
+		return *this; 
+	}
+	inline MC_FLOAT& operator[](int i)
+	{ 
+		return v[i]; 
+	}
+} mcVec3f;
+
+static inline MC_FLOAT mc_internalLength2(const mcVec3f& v)
+{
+	return v.x * v.x + v.y * v.y + v.z * v.z;
+}
+static inline MC_FLOAT mc_internalLength(const mcVec3f& v)
+{
+	return std::sqrt(mc_internalLength2(v));
+}
+static inline mcVec3f mc_internalNormalize(const mcVec3f& v)
+{
+	MC_FLOAT vv = mc_internalLength(v);
+	return mcVec3f({ v.x / vv, v.y / vv, v.z / vv });
+}
+static inline mcVec3f mc_internalCross(const mcVec3f& v1, const mcVec3f& v2)
+{
+	return mcVec3f({ v1.y * v2.z - v1.z * v2.y, v1.z * v2.x - v1.x * v2.z, v1.x * v2.y - v1.y * v2.x });
+}
+inline mcVec3f operator-(const mcVec3f& l, const mcVec3f r)
+{
+	return mcVec3f({ l.x - r.x, l.y - r.y, l.z - r.z });
+}
+inline mcVec3f operator+(const mcVec3f& l, const mcVec3f& r)
+{
+	return mcVec3f({ l.x + r.x, l.y + r.y, l.z + r.z });
+}
 
 typedef struct mcVec3i {
 public:
@@ -32,27 +69,19 @@ public:
 			int x, y, z;
 		};
 	};
-	int& operator[](int i) { return v[i]; }
+	inline int& operator[](int i) { return v[i]; }
 } mcVec3i;
-
-static inline MC_FLOAT Length2(const mcVec3& v) { return v.x * v.x + v.y * v.y + v.z * v.z; }
-static inline MC_FLOAT Length(const mcVec3& v) { return std::sqrt(Length2(v)); }                                                                \
-static inline mcVec3 Normalize(const mcVec3& v)
-{
-	MC_FLOAT vv = Length(v);
-	return mcVec3({ v.x / vv, v.y / vv, v.z / vv });
-}
-inline mcVec3 Cross(const mcVec3& v1, const mcVec3& v2) { return mcVec3({ v1.y * v2.z - v1.z * v2.y, v1.z * v2.x - v1.x * v2.z, v1.x * v2.y - v1.y * v2.x }); }
-inline mcVec3 operator-(const mcVec3& l, const mcVec3 r) { return mcVec3({ l.x - r.x, l.y - r.y, l.z - r.z }); }
-inline mcVec3 operator+(const mcVec3& l, const mcVec3& r) { return mcVec3({ l.x + r.x, l.y + r.y, l.z + r.z }); }
 
 typedef struct mcMesh {
 public:
-	std::vector<mcVec3> vertices;
-	std::vector<mcVec3> normals;
+	std::vector<mcVec3f> vertices;
+	std::vector<mcVec3f> normals;
 	std::vector<size_t> indices;
 } mcMesh;
 
+/*!
+\brief Public interface of the API.
+*/
 void marching_cube(MC_FLOAT* field, int nx, int ny, int nz, mcMesh& outputMesh);
 
 #endif
@@ -60,17 +89,23 @@ void marching_cube(MC_FLOAT* field, int nx, int ny, int nz, mcMesh& outputMesh);
 
 #ifdef MC_IMPLEM_ENABLE
 
-inline int ToIndex1D(int i, int j, int k, int nx, int ny, int nz)
+/*!
+\brief
+*/
+static inline int mc_internalToIndex1D(int i, int j, int k, const mcVec3i& size)
 {
-	return (k * ny + j) * nx + i;
+	return (k * size.y + j) * size.x + i;
 }
 
-inline int ToIndex1DSlab(int i, int j, int k, int nx, int ny, int nz)
+/*!
+\brief
+*/
+static inline int mc_internalToIndex1DSlab(int i, int j, int k, const mcVec3i& size)
 {
-	return nx * ny * (k % 2) + j * nx + i;
+	return size.x * size.y * (k % 2) + j * size.x + i;
 }
 
-static const unsigned long long marching_cube_tris[256] =
+static const unsigned long long mc_internalMarching_cube_tris[256] =
 {
 	0ULL, 33793ULL, 36945ULL, 159668546ULL,
 	18961ULL, 144771090ULL, 5851666ULL, 595283255635ULL,
@@ -138,14 +173,31 @@ static const unsigned long long marching_cube_tris[256] =
 	143955266ULL, 2385ULL, 18433ULL, 0ULL,
 };
 
-inline void MakeTriangle(mcMesh& mesh, int a, int b, int c)
+/*!
+\brief
+*/
+static void mc_internalComputeEdge(mcVec3i* slab_inds, mcMesh& outputMesh, int n_edge, float va, float vb, int axis, int x, int y, int z, const mcVec3i& size)
 {
-	mcVec3& va = mesh.vertices[a];
-	mcVec3& vb = mesh.vertices[b];
-	mcVec3& vc = mesh.vertices[c];
-	mcVec3 ab = va - vb;
-	mcVec3 cb = vc - vb;
-	mcVec3 n = Cross(cb, ab);
+	if ((va < 0.0) == (vb < 0.0))
+		return;
+	mcVec3f v = { MC_FLOAT(x), MC_FLOAT(y), MC_FLOAT(z) };
+	v[axis] += va / (va - vb);
+	slab_inds[mc_internalToIndex1DSlab(x, y, z, size)][axis] = int32_t(outputMesh.vertices.size());
+	outputMesh.vertices.push_back(v);
+	outputMesh.normals.push_back(mcVec3f({ 0, 0, 0 }));
+}
+
+/*!
+\brief
+*/
+static void mc_internalAccumulateNormal(mcMesh& mesh, int a, int b, int c)
+{
+	mcVec3f& va = mesh.vertices[a];
+	mcVec3f& vb = mesh.vertices[b];
+	mcVec3f& vc = mesh.vertices[c];
+	mcVec3f ab = va - vb;
+	mcVec3f cb = vc - vb;
+	mcVec3f n = mc_internalCross(cb, ab);
 	mesh.normals[a] += n;
 	mesh.normals[b] += n;
 	mesh.normals[c] += n;
@@ -162,24 +214,29 @@ output it to an indexed mesh.
 */
 void marching_cube(MC_FLOAT* field, int nx, int ny, int nz, mcMesh& outputMesh)
 {
+	outputMesh.vertices.reserve(100000);
+	outputMesh.normals.reserve(100000);
+	outputMesh.indices.reserve(400000);
+
+	const mcVec3i size = { nx, ny, nz };
 	mcVec3i* slab_inds = new mcVec3i[nx * ny * 2];
+	MC_FLOAT vs[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+	int edge_indices[12];
 	for (int z = 0; z < nx - 1; z++)
 	{
 		for (int y = 0; y < ny - 1; y++)
 		{
 			for (int x = 0; x < nz - 1; x++)
 			{
-				const float vs[8] =
-				{
-					field[ToIndex1D(x,   y,   z,   nx, ny, nz)],
-					field[ToIndex1D(x + 1, y,   z,   nx, ny, nz)],
-					field[ToIndex1D(x,   y + 1, z,   nx, ny, nz)],
-					field[ToIndex1D(x + 1, y + 1, z,   nx, ny, nz)],
-					field[ToIndex1D(x,   y,   z + 1, nx, ny, nz)],
-					field[ToIndex1D(x + 1, y,   z + 1, nx, ny, nz)],
-					field[ToIndex1D(x,   y + 1, z + 1, nx, ny, nz)],
-					field[ToIndex1D(x + 1, y + 1, z + 1, nx, ny, nz)],
-				};
+				vs[0] = field[mc_internalToIndex1D(x, y, z, size)];
+				vs[1] = field[mc_internalToIndex1D(x + 1, y, z, size)];
+				vs[2] = field[mc_internalToIndex1D(x, y + 1, z, size)];
+				vs[3] = field[mc_internalToIndex1D(x + 1, y + 1, z, size)];
+				vs[4] = field[mc_internalToIndex1D(x, y, z + 1, size)];
+				vs[5] = field[mc_internalToIndex1D(x + 1, y, z + 1, size)];
+				vs[6] = field[mc_internalToIndex1D(x, y + 1, z + 1, size)];
+				vs[7] = field[mc_internalToIndex1D(x + 1, y + 1, z + 1, size)];
+
 				const int config_n =
 					((vs[0] < 0.0f) << 0) |
 					((vs[1] < 0.0f) << 1) |
@@ -192,60 +249,47 @@ void marching_cube(MC_FLOAT* field, int nx, int ny, int nz, mcMesh& outputMesh)
 				if (config_n == 0 || config_n == 255)
 					continue;
 
-				auto do_edge = [&](int n_edge, float va, float vb, int axis, int i, int j, int k)
-				{
-					if ((va < 0.0) == (vb < 0.0))
-						return;
-					mcVec3 v = { MC_FLOAT(i), MC_FLOAT(j), MC_FLOAT(k) };
-					v[axis] += va / (va - vb);
-					slab_inds[ToIndex1DSlab(i, j, k, nx, ny, nz)][axis] = int32_t(outputMesh.vertices.size());
-					outputMesh.vertices.push_back(v);
-					outputMesh.normals.push_back(mcVec3({ 0, 0, 0 }));
-				};
-
 				if (y == 0 && z == 0)
-					do_edge(0, vs[0], vs[1], 0, x, y, z);
+					mc_internalComputeEdge(slab_inds, outputMesh, 0, vs[0], vs[1], 0, x, y, z, size);
 				if (z == 0)
-					do_edge(1, vs[2], vs[3], 0, x, y + 1, z);
+					mc_internalComputeEdge(slab_inds, outputMesh, 1, vs[2], vs[3], 0, x, y + 1, z, size);
 				if (y == 0)
-					do_edge(2, vs[4], vs[5], 0, x, y, z + 1);
-				do_edge(3, vs[6], vs[7], 0, x, y + 1, z + 1);
+					mc_internalComputeEdge(slab_inds, outputMesh, 2, vs[4], vs[5], 0, x, y, z + 1, size);
+				mc_internalComputeEdge(slab_inds, outputMesh, 3, vs[6], vs[7], 0, x, y + 1, z + 1, size);
 
 				if (x == 0 && z == 0)
-					do_edge(4, vs[0], vs[2], 1, x, y, z);
+					mc_internalComputeEdge(slab_inds, outputMesh, 4, vs[0], vs[2], 1, x, y, z, size);
 				if (z == 0)
-					do_edge(5, vs[1], vs[3], 1, x + 1, y, z);
+					mc_internalComputeEdge(slab_inds, outputMesh, 5, vs[1], vs[3], 1, x + 1, y, z, size);
 				if (x == 0)
-					do_edge(6, vs[4], vs[6], 1, x, y, z + 1);
-				do_edge(7, vs[5], vs[7], 1, x + 1, y, z + 1);
+					mc_internalComputeEdge(slab_inds, outputMesh, 6, vs[4], vs[6], 1, x, y, z + 1, size);
+				mc_internalComputeEdge(slab_inds, outputMesh, 7, vs[5], vs[7], 1, x + 1, y, z + 1, size);
 
 				if (x == 0 && y == 0)
-					do_edge(8, vs[0], vs[4], 2, x, y, z);
+					mc_internalComputeEdge(slab_inds, outputMesh, 8, vs[0], vs[4], 2, x, y, z, size);
 				if (y == 0)
-					do_edge(9, vs[1], vs[5], 2, x + 1, y, z);
+					mc_internalComputeEdge(slab_inds, outputMesh, 9, vs[1], vs[5], 2, x + 1, y, z, size);
 				if (x == 0)
-					do_edge(10, vs[2], vs[6], 2, x, y + 1, z);
-				do_edge(11, vs[3], vs[7], 2, x + 1, y + 1, z);
+					mc_internalComputeEdge(slab_inds, outputMesh, 10, vs[2], vs[6], 2, x, y + 1, z, size);
+				mc_internalComputeEdge(slab_inds, outputMesh, 11, vs[3], vs[7], 2, x + 1, y + 1, z, size);
+				
+				edge_indices[0] = slab_inds[mc_internalToIndex1DSlab(x, y, z, size)].x;
+				edge_indices[1] = slab_inds[mc_internalToIndex1DSlab(x, y + 1, z, size)].x;
+				edge_indices[2] = slab_inds[mc_internalToIndex1DSlab(x, y, z + 1, size)].x;
+				edge_indices[3] = slab_inds[mc_internalToIndex1DSlab(x, y + 1, z + 1, size)].x;
+				edge_indices[4] = slab_inds[mc_internalToIndex1DSlab(x, y, z, size)].y;
+				edge_indices[5] = slab_inds[mc_internalToIndex1DSlab(x + 1, y, z, size)].y;
+				edge_indices[6] = slab_inds[mc_internalToIndex1DSlab(x, y, z + 1, size)].y;
+				edge_indices[7] = slab_inds[mc_internalToIndex1DSlab(x + 1, y, z + 1, size)].y;
+				edge_indices[8] = slab_inds[mc_internalToIndex1DSlab(x, y, z, size)].z;
+				edge_indices[9] = slab_inds[mc_internalToIndex1DSlab(x + 1, y, z, size)].z;
+				edge_indices[10] = slab_inds[mc_internalToIndex1DSlab(x, y + 1, z, size)].z;
+				edge_indices[11] = slab_inds[mc_internalToIndex1DSlab(x + 1, y + 1, z, size)].z;
 
-				int edge_indices[12];
-				edge_indices[0] = slab_inds[ToIndex1DSlab(x, y, z, nx, ny, nz)].x;
-				edge_indices[1] = slab_inds[ToIndex1DSlab(x, y + 1, z, nx, ny, nz)].x;
-				edge_indices[2] = slab_inds[ToIndex1DSlab(x, y, z + 1, nx, ny, nz)].x;
-				edge_indices[3] = slab_inds[ToIndex1DSlab(x, y + 1, z + 1, nx, ny, nz)].x;
-				edge_indices[4] = slab_inds[ToIndex1DSlab(x, y, z, nx, ny, nz)].y;
-				edge_indices[5] = slab_inds[ToIndex1DSlab(x + 1, y, z, nx, ny, nz)].y;
-				edge_indices[6] = slab_inds[ToIndex1DSlab(x, y, z + 1, nx, ny, nz)].y;
-				edge_indices[7] = slab_inds[ToIndex1DSlab(x + 1, y, z + 1, nx, ny, nz)].y;
-				edge_indices[8] = slab_inds[ToIndex1DSlab(x, y, z, nx, ny, nz)].z;
-				edge_indices[9] = slab_inds[ToIndex1DSlab(x + 1, y, z, nx, ny, nz)].z;
-				edge_indices[10] = slab_inds[ToIndex1DSlab(x, y + 1, z, nx, ny, nz)].z;
-				edge_indices[11] = slab_inds[ToIndex1DSlab(x + 1, y + 1, z, nx, ny, nz)].z;
-
-				const uint64_t config = marching_cube_tris[config_n];
+				const uint64_t config = mc_internalMarching_cube_tris[config_n];
 				const int n_triangles = config & 0xF;
 				const int n_indices = n_triangles * 3;
 				const int index_base = int(outputMesh.indices.size());
-
 				int offset = 4;
 				for (int i = 0; i < n_indices; i++)
 				{
@@ -255,7 +299,7 @@ void marching_cube(MC_FLOAT* field, int nx, int ny, int nz, mcMesh& outputMesh)
 				}
 				for (int i = 0; i < n_triangles; i++)
 				{
-					MakeTriangle(outputMesh,
+					mc_internalAccumulateNormal(outputMesh,
 						outputMesh.indices[index_base + i * 3 + 0],
 						outputMesh.indices[index_base + i * 3 + 1],
 						outputMesh.indices[index_base + i * 3 + 2]);
@@ -264,8 +308,7 @@ void marching_cube(MC_FLOAT* field, int nx, int ny, int nz, mcMesh& outputMesh)
 		}
 	}
 	for (size_t i = 0; i < outputMesh.normals.size(); i++)
-		outputMesh.normals[i] = Normalize(outputMesh.normals[i]);
-
+		outputMesh.normals[i] = mc_internalNormalize(outputMesh.normals[i]);
 	delete[] slab_inds;
 }
 

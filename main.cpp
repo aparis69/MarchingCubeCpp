@@ -4,8 +4,37 @@
 #include "noise.h"
 #include <iostream>
 #include <fstream>
+#include <chrono>
 
-int main()
+void TestPerformances()
+{
+	// Compute a scalarfield from a single octave of perlin noise
+	const int n = 100;
+	MC_FLOAT* field = new MC_FLOAT[n * n * n];
+	for (int i = 0; i < n; i++)
+	{
+		for (int j = 0; j < n; j++)
+		{
+			for (int k = 0; k < n; k++)
+				field[(k * n + j) * n + i] = PerlinNoise::GetValue(i * 0.03478f, j * 0.03478f, k * 0.03478f);
+		}
+	}
+
+	// Measure performance on 10 marching cubes
+	int count = 100;
+	std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+	{
+		for (int i = 0; i < count; i++)
+		{
+			mcMesh mesh;
+			marching_cube(field, n, n, n, mesh);
+		}
+	}
+	std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+	std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() / count << "[ms]" << std::endl;
+}
+
+void TestSimpleMC()
 {
 	// Compute a scalarfield from a single octave of perlin noise
 	const int n = 100;
@@ -27,7 +56,7 @@ int main()
 	std::ofstream out;
 	out.open("test.obj");
 	if (out.is_open() == false)
-		return 0;
+		return;
 	out << "g " << "Obj" << std::endl;
 	for (size_t i = 0; i < mesh.vertices.size(); i++)
 		out << "v " << mesh.vertices.at(i).x << " " << mesh.vertices.at(i).y << " " << mesh.vertices.at(i).z << '\n';
@@ -41,6 +70,11 @@ int main()
 			<< '\n';
 	}
 	out.close();
+}
 
+int main()
+{
+	TestPerformances();
+	TestSimpleMC();
 	return 0;
 }
