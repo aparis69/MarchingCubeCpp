@@ -13,6 +13,8 @@ namespace MC
 	typedef float MC_FLOAT;
 #endif
 
+	typedef unsigned int muint;
+
 	typedef struct mcVec3f
 	{
 	public:
@@ -25,11 +27,6 @@ namespace MC
 		inline mcVec3f& operator+=(const mcVec3f& r)
 		{
 			x += r.x; y += r.y; z += r.z;
-			return *this;
-		}
-		inline mcVec3f& operator-=(const mcVec3f& r)
-		{
-			x -= r.x; y -= r.y; z -= r.z;
 			return *this;
 		}
 		inline MC_FLOAT& operator[](int i)
@@ -59,21 +56,17 @@ namespace MC
 	{
 		return mcVec3f({ l.x - r.x, l.y - r.y, l.z - r.z });
 	}
-	inline mcVec3f operator+(const mcVec3f& l, const mcVec3f& r)
-	{
-		return mcVec3f({ l.x + r.x, l.y + r.y, l.z + r.z });
-	}
 
 	typedef struct mcVec3i
 	{
 	public:
 		union {
-			int v[3];
+			muint v[3];
 			struct {
-				int x, y, z;
+				muint x, y, z;
 			};
 		};
-		inline int& operator[](int i) { return v[i]; }
+		inline muint& operator[](int i) { return v[i]; }
 	} mcVec3i;
 
 	typedef struct mcMesh
@@ -81,11 +74,11 @@ namespace MC
 	public:
 		std::vector<mcVec3f> vertices;
 		std::vector<mcVec3f> normals;
-		std::vector<size_t> indices;
+		std::vector<muint> indices;
 	} mcMesh;
 
-	void marching_cube(MC_FLOAT* field, int nx, int ny, int nz, mcMesh& outputMesh);
-	void setDefaultArraySizes(int vertSize, int normSize, int triSize);
+	void marching_cube(MC_FLOAT* field, muint nx, muint ny, muint nz, mcMesh& outputMesh);
+	void setDefaultArraySizes(muint vertSize, muint normSize, muint triSize);
 }
 
 
@@ -94,14 +87,14 @@ namespace MC
 namespace MC
 {
 #ifdef MC_IMPLEM_ENABLE
-	static int defaultVerticeArraySize = 100000;
-	static int defaultNormalArraySize = 100000;
-	static int defaultTriangleArraySize = 400000;
+	static muint defaultVerticeArraySize = 100000;
+	static muint defaultNormalArraySize = 100000;
+	static muint defaultTriangleArraySize = 400000;
 
 	/*!
 	\brief
 	*/
-	static inline int mc_internalToIndex1D(int i, int j, int k, const mcVec3i& size)
+	static inline muint mc_internalToIndex1D(muint i, muint j, muint k, const mcVec3i& size)
 	{
 		return (k * size.y + j) * size.x + i;
 	}
@@ -109,7 +102,7 @@ namespace MC
 	/*!
 	\brief
 	*/
-	static inline int mc_internalToIndex1DSlab(int i, int j, int k, const mcVec3i& size)
+	static inline muint mc_internalToIndex1DSlab(muint i, muint j, muint k, const mcVec3i& size)
 	{
 		return size.x * size.y * (k % 2) + j * size.x + i;
 	}
@@ -184,13 +177,13 @@ namespace MC
 	/*!
 	\brief
 	*/
-	static void mc_internalComputeEdge(mcVec3i* slab_inds, mcMesh& outputMesh, int n_edge, float va, float vb, int axis, int x, int y, int z, const mcVec3i& size)
+	static void mc_internalComputeEdge(mcVec3i* slab_inds, mcMesh& outputMesh, float va, float vb, int axis, muint x, muint y, muint z, const mcVec3i& size)
 	{
 		if ((va < 0.0) == (vb < 0.0))
 			return;
 		mcVec3f v = { MC_FLOAT(x), MC_FLOAT(y), MC_FLOAT(z) };
 		v[axis] += va / (va - vb);
-		slab_inds[mc_internalToIndex1DSlab(x, y, z, size)][axis] = int32_t(outputMesh.vertices.size());
+		slab_inds[mc_internalToIndex1DSlab(x, y, z, size)][axis] = muint(outputMesh.vertices.size());
 		outputMesh.vertices.push_back(v);
 		outputMesh.normals.push_back(mcVec3f({ 0, 0, 0 }));
 	}
@@ -198,7 +191,7 @@ namespace MC
 	/*!
 	\brief
 	*/
-	static void mc_internalAccumulateNormal(mcMesh& mesh, int a, int b, int c)
+	static inline void mc_internalAccumulateNormal(mcMesh& mesh, muint a, muint b, muint c)
 	{
 		mcVec3f& va = mesh.vertices[a];
 		mcVec3f& vb = mesh.vertices[b];
@@ -215,7 +208,7 @@ namespace MC
 	/*
 	\brief
 	*/
-	static void setDefaultArraySizes(int vertSize, int normSize, int triSize)
+	static inline void setDefaultArraySizes(muint vertSize, muint normSize, muint triSize)
 	{
 		defaultVerticeArraySize = vertSize;
 		defaultNormalArraySize = normSize;
@@ -231,7 +224,7 @@ namespace MC
 	\param nz grid dimension
 	\param outputMesh output of the function
 	*/
-	static void marching_cube(MC_FLOAT* field, int nx, int ny, int nz, mcMesh& outputMesh)
+	static void marching_cube(MC_FLOAT* field, muint nx, muint ny, muint nz, mcMesh& outputMesh)
 	{
 		outputMesh.vertices.reserve(defaultVerticeArraySize);
 		outputMesh.normals.reserve(defaultNormalArraySize);
@@ -240,12 +233,12 @@ namespace MC
 		const mcVec3i size = { nx, ny, nz };
 		mcVec3i* slab_inds = new mcVec3i[nx * ny * 2];
 		MC_FLOAT vs[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
-		int edge_indices[12];
-		for (int z = 0; z < nx - 1; z++)
+		muint edge_indices[12];
+		for (muint z = 0; z < nx - 1; z++)
 		{
-			for (int y = 0; y < ny - 1; y++)
+			for (muint y = 0; y < ny - 1; y++)
 			{
-				for (int x = 0; x < nz - 1; x++)
+				for (muint x = 0; x < nz - 1; x++)
 				{
 					vs[0] = field[mc_internalToIndex1D(x, y, z, size)];
 					vs[1] = field[mc_internalToIndex1D(x + 1, y, z, size)];
@@ -269,28 +262,28 @@ namespace MC
 						continue;
 
 					if (y == 0 && z == 0)
-						mc_internalComputeEdge(slab_inds, outputMesh, 0, vs[0], vs[1], 0, x, y, z, size);
+						mc_internalComputeEdge(slab_inds, outputMesh, vs[0], vs[1], 0, x, y, z, size);
 					if (z == 0)
-						mc_internalComputeEdge(slab_inds, outputMesh, 1, vs[2], vs[3], 0, x, y + 1, z, size);
+						mc_internalComputeEdge(slab_inds, outputMesh, vs[2], vs[3], 0, x, y + 1, z, size);
 					if (y == 0)
-						mc_internalComputeEdge(slab_inds, outputMesh, 2, vs[4], vs[5], 0, x, y, z + 1, size);
-					mc_internalComputeEdge(slab_inds, outputMesh, 3, vs[6], vs[7], 0, x, y + 1, z + 1, size);
+						mc_internalComputeEdge(slab_inds, outputMesh, vs[4], vs[5], 0, x, y, z + 1, size);
+					mc_internalComputeEdge(slab_inds, outputMesh, vs[6], vs[7], 0, x, y + 1, z + 1, size);
 
 					if (x == 0 && z == 0)
-						mc_internalComputeEdge(slab_inds, outputMesh, 4, vs[0], vs[2], 1, x, y, z, size);
+						mc_internalComputeEdge(slab_inds, outputMesh, vs[0], vs[2], 1, x, y, z, size);
 					if (z == 0)
-						mc_internalComputeEdge(slab_inds, outputMesh, 5, vs[1], vs[3], 1, x + 1, y, z, size);
+						mc_internalComputeEdge(slab_inds, outputMesh, vs[1], vs[3], 1,x + 1, y, z, size);
 					if (x == 0)
-						mc_internalComputeEdge(slab_inds, outputMesh, 6, vs[4], vs[6], 1, x, y, z + 1, size);
-					mc_internalComputeEdge(slab_inds, outputMesh, 7, vs[5], vs[7], 1, x + 1, y, z + 1, size);
+						mc_internalComputeEdge(slab_inds, outputMesh, vs[4], vs[6], 1, x, y, z + 1, size);
+					mc_internalComputeEdge(slab_inds, outputMesh, vs[5], vs[7], 1, x + 1, y, z + 1, size);
 
 					if (x == 0 && y == 0)
-						mc_internalComputeEdge(slab_inds, outputMesh, 8, vs[0], vs[4], 2, x, y, z, size);
+						mc_internalComputeEdge(slab_inds, outputMesh, vs[0], vs[4], 2, x, y, z, size);
 					if (y == 0)
-						mc_internalComputeEdge(slab_inds, outputMesh, 9, vs[1], vs[5], 2, x + 1, y, z, size);
+						mc_internalComputeEdge(slab_inds, outputMesh, vs[1], vs[5], 2, x + 1, y, z, size);
 					if (x == 0)
-						mc_internalComputeEdge(slab_inds, outputMesh, 10, vs[2], vs[6], 2, x, y + 1, z, size);
-					mc_internalComputeEdge(slab_inds, outputMesh, 11, vs[3], vs[7], 2, x + 1, y + 1, z, size);
+						mc_internalComputeEdge(slab_inds, outputMesh, vs[2], vs[6], 2, x, y + 1, z, size);
+					mc_internalComputeEdge(slab_inds, outputMesh, vs[3], vs[7], 2, x + 1, y + 1, z, size);
 
 					edge_indices[0] = slab_inds[mc_internalToIndex1DSlab(x, y, z, size)].x;
 					edge_indices[1] = slab_inds[mc_internalToIndex1DSlab(x, y + 1, z, size)].x;

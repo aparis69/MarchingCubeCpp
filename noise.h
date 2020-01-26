@@ -63,11 +63,6 @@ public:
 		return ((h & 1) == 0 ? u : -u) + ((h & 2) == 0 ? v : -v);
 	}
 
-	static inline float GetValue(float x, float y)
-	{
-		return GetValue(x, y, 0.0f);
-	}
-
 	static inline float GetValue(float x, float y, float z)
 	{
 		// Unit coordinates in cube

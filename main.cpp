@@ -75,6 +75,6 @@ void TestSimpleMC()
 int main()
 {
 	TestPerformances();
-	//TestSimpleMC();
+	TestSimpleMC();
 	return 0;
 }
