@@ -16,7 +16,7 @@ void TestPerformances()
 		for (int j = 0; j < n; j++)
 		{
 			for (int k = 0; k < n; k++)
-				field[(k * n + j) * n + i] = PerlinNoise::GetValue(i * 0.03478f, j * 0.03478f, k * 0.03478f);
+				field[(k * n + j) * n + i] = PerlinNoise::GetValue(i * 0.0201f, j * 0.0201f, k * 0.0201f);
 		}
 	}
 
@@ -44,7 +44,7 @@ void TestSimpleMC()
 		for (int j = 0; j < n; j++)
 		{
 			for (int k = 0; k < n; k++)
-				field[(k * n + j) * n + i] = PerlinNoise::GetValue(i * 0.03478f, j * 0.03478f, k * 0.03478f);
+				field[(k * n + j) * n + i] = PerlinNoise::GetValue(i * 0.0201f, j * 0.0201f, k * 0.0201f);
 		}
 	}
 
@@ -74,7 +74,7 @@ void TestSimpleMC()
 
 int main()
 {
-	TestPerformances();
+	//TestPerformances();
 	TestSimpleMC();
 	return 0;
 }
