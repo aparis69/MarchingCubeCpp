@@ -7,7 +7,7 @@ This work was motivated by this public domain implementation of the marching cub
 a fully runnable example in OpenGL. I thought it could be simplified and could make a good header-only library.
 
 ## Behaviour
-Calling Mc::marching_cube will create an indexed mesh with vertices and normals defined in their own std::vector's.
+Calling MC::marching_cube will create an indexed mesh with vertices and normals defined in their own std::vector's.
 By default, data is allocated for vertices, normals and triangle indices. You can change the default allocated 
 space using the function MC::setDefaultArraySizes.
 
