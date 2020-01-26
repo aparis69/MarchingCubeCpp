@@ -10,7 +10,7 @@ void TestPerformances()
 {
 	// Compute a scalarfield from a single octave of perlin noise
 	const int n = 100;
-	MC_FLOAT* field = new MC_FLOAT[n * n * n];
+	MC::MC_FLOAT* field = new MC::MC_FLOAT[n * n * n];
 	for (int i = 0; i < n; i++)
 	{
 		for (int j = 0; j < n; j++)
@@ -20,37 +20,37 @@ void TestPerformances()
 		}
 	}
 
-	// Measure performance on 10 marching cubes
+	// Measure performance on 10 iterations of marching cubes
 	int count = 100;
 	std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 	{
 		for (int i = 0; i < count; i++)
 		{
-			mcMesh mesh;
-			marching_cube(field, n, n, n, mesh);
+			MC::mcMesh mesh;
+			MC::marching_cube(field, n, n, n, mesh);
 		}
 	}
 	std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-	std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() / count << "[ms]" << std::endl;
+	std::cout << "Average time = " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() / count << "[ms]" << std::endl;
 }
 
 void TestSimpleMC()
 {
 	// Compute a scalarfield from a single octave of perlin noise
 	const int n = 100;
-	MC_FLOAT* field = new MC_FLOAT[n * n * n];
+	MC::MC_FLOAT* field = new MC::MC_FLOAT[n * n * n];
 	for (int i = 0; i < n; i++)
 	{
 		for (int j = 0; j < n; j++)
 		{
 			for (int k = 0; k < n; k++)
-				field[(k * n + j) * n + i] = PerlinNoise::GetValue(i * 0.03478, j * 0.03478, k * 0.03478);
+				field[(k * n + j) * n + i] = PerlinNoise::GetValue(i * 0.03478f, j * 0.03478f, k * 0.03478f);
 		}
 	}
 
 	// Compute isosurface using marching cube
-	mcMesh mesh;
-	marching_cube(field, n, n, n, mesh);
+	MC::mcMesh mesh;
+	MC::marching_cube(field, n, n, n, mesh);
 
 	// Export the result as an .obj file
 	std::ofstream out;
@@ -75,6 +75,6 @@ void TestSimpleMC()
 int main()
 {
 	TestPerformances();
-	TestSimpleMC();
+	//TestSimpleMC();
 	return 0;
 }
