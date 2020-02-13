@@ -37,7 +37,7 @@ void TestPerformances()
 void TestSimpleMC()
 {
 	// Compute a scalarfield from a single octave of perlin noise
-	const int n = 100;
+	const int n = 200;
 	MC::MC_FLOAT* field = new MC::MC_FLOAT[n * n * n];
 	for (int i = 0; i < n; i++)
 	{

@@ -11,7 +11,8 @@ Calling MC::marching_cube will create an indexed mesh with vertices and normals 
 By default, data is allocated for vertices, normals and triangle indices. You can change the default allocated 
 space using the function MC::setDefaultArraySizes.
 
-The output mesh represents the zero-isosurface of the input data.
+The output mesh represents the zero-isosurface of the input scalar field. Coordinates of the vertices will follow
+the grid discretization: a 128x128x128 grid will create a mesh embedded in the axis-aligned box from Vec3(0) to Vec3(128).
 
 You can optionally enable double precision by defining MC_CPP_USE_DOUBLE_PRECISION before including the header.
 
@@ -23,7 +24,7 @@ First define MC_CPP_ENABLE and then include MC.h in your project. Example:
 
 int main()
 {
-	// Create a scalarfield with whatever dimension and values you want.
+	// First compute a scalar field
 	const int n = 100;
 	MC::MC_FLOAT* field = new MC::MC_FLOAT[n * n * n];
 	// [...]
