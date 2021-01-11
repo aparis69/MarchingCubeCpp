@@ -18,9 +18,11 @@ namespace MC
 	typedef struct mcVec3f
 	{
 	public:
-		union {
+		union 
+		{
 			MC_FLOAT v[3];
-			struct {
+			struct 
+			{
 				MC_FLOAT x, y, z;
 			};
 		};
@@ -60,9 +62,11 @@ namespace MC
 	typedef struct mcVec3i
 	{
 	public:
-		union {
+		union 
+		{
 			muint v[3];
-			struct {
+			struct 
+			{
 				muint x, y, z;
 			};
 		};
@@ -87,27 +91,23 @@ namespace MC
 namespace MC
 {
 #ifdef MC_IMPLEM_ENABLE
-	static muint defaultVerticeArraySize = 100000;
-	static muint defaultNormalArraySize = 100000;
-	static muint defaultTriangleArraySize = 400000;
+	static muint defaultVerticeArraySize	= 100000;
+	static muint defaultNormalArraySize		= 100000;
+	static muint defaultTriangleArraySize	= 400000;
 
-	/*!
-	\brief
-	*/
 	static inline muint mc_internalToIndex1D(muint i, muint j, muint k, const mcVec3i& size)
 	{
 		return (k * size.y + j) * size.x + i;
 	}
 
-	/*!
-	\brief
-	*/
 	static inline muint mc_internalToIndex1DSlab(muint i, muint j, muint k, const mcVec3i& size)
 	{
 		return size.x * size.y * (k % 2) + j * size.x + i;
 	}
 
-	static const unsigned long long mc_internalMarching_cube_tris[256] = {
+	// Look-up table for triangle configurations
+	static const unsigned long long mc_internalMarching_cube_tris[256] = 
+	{
 		0ULL, 33793ULL, 36945ULL, 159668546ULL,
 		18961ULL, 144771090ULL, 5851666ULL, 595283255635ULL,
 		20913ULL, 67640146ULL, 193993474ULL, 655980856339ULL,
@@ -175,21 +175,29 @@ namespace MC
 	};
 
 	/*!
-	\brief
+	\brief Approximates the vertex position of the mesh from the scalar values along an edge (va, vb).
+	\param slab_inds slab indices global array
+	\param mesh the mesh
+	\param va, vb edges values
+	\param axis axis index 0/1/2
+	\param x, y, z current slab index
+	\param size slab indices array size
 	*/
-	static void mc_internalComputeEdge(mcVec3i* slab_inds, mcMesh& outputMesh, float va, float vb, int axis, muint x, muint y, muint z, const mcVec3i& size)
+	static void mc_internalComputeEdge(mcVec3i* slab_inds, mcMesh& mesh, float va, float vb, int axis, muint x, muint y, muint z, const mcVec3i& size)
 	{
 		if ((va < 0.0) == (vb < 0.0))
 			return;
 		mcVec3f v = { MC_FLOAT(x), MC_FLOAT(y), MC_FLOAT(z) };
 		v[axis] += va / (va - vb);
-		slab_inds[mc_internalToIndex1DSlab(x, y, z, size)][axis] = muint(outputMesh.vertices.size());
-		outputMesh.vertices.push_back(v);
-		outputMesh.normals.push_back(mcVec3f({ 0, 0, 0 }));
+		slab_inds[mc_internalToIndex1DSlab(x, y, z, size)][axis] = muint(mesh.vertices.size());
+		mesh.vertices.push_back(v);
+		mesh.normals.push_back(mcVec3f({ 0, 0, 0 }));
 	}
 
 	/*!
-	\brief
+	\brief Computes and acumulates the geometric normal of triangle formed by vertices (a, b, c).
+	\param mesh the mesh
+	\param a, b, c vertex indices
 	*/
 	static inline void mc_internalAccumulateNormal(mcMesh& mesh, muint a, muint b, muint c)
 	{
@@ -206,23 +214,25 @@ namespace MC
 
 
 	/*
-	\brief
+	\brief Stores the default array sizes for the indexed mesh computed
+	by the marching cubes. Useful for speeding-up the marching cubes.
+	\param vertSize vertex array size
+	\param normSize normal array size
+	\param triSize triangle index array size
 	*/
 	inline void setDefaultArraySizes(muint vertSize, muint normSize, muint triSize)
 	{
-		defaultVerticeArraySize = vertSize;
-		defaultNormalArraySize = normSize;
-		defaultTriangleArraySize = triSize;
+		defaultVerticeArraySize		= vertSize;
+		defaultNormalArraySize		= normSize;
+		defaultTriangleArraySize	= triSize;
 	}
 
 	/*!
-	\brief Compute the mesh representing the zero isosurface of a 3D scalarfield and
-	 output it to an indexed mesh.
+	\brief Computes the mesh representing the zero isosurface of a 3D scalarfield and
+	 outputs it to an indexed mesh.
 	\param field scalarfield of real values
-	\param nx grid dimension
-	\param ny grid dimension
-	\param nz grid dimension
-	\param outputMesh output of the function
+	\param nx, ny, nz grid dimension
+	\param outputMesh indexed mesh returned.
 	*/
 	void marching_cube(MC_FLOAT* field, muint nx, muint ny, muint nz, mcMesh& outputMesh)
 	{

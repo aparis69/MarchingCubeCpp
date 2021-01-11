@@ -20,7 +20,7 @@ void TestPerformances()
 		}
 	}
 
-	// Measure performance on 10 iterations of marching cubes
+	// Measure performance on 100 iterations of marching cubes
 	int count = 100;
 	std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 	{
@@ -37,8 +37,8 @@ void TestPerformances()
 void TestSimpleMC()
 {
 	// Compute a scalarfield from a single octave of perlin noise
-	const int n = 200;
-	MC::MC_FLOAT* field = new MC::MC_FLOAT[n * n * n];
+	const int n = 50;
+	float* field = new float[n * n * n];
 	for (int i = 0; i < n; i++)
 	{
 		for (int j = 0; j < n; j++)
