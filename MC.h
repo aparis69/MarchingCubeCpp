@@ -244,11 +244,11 @@ namespace MC
 		mcVec3i* slab_inds = new mcVec3i[nx * ny * 2];
 		MC_FLOAT vs[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 		muint edge_indices[12];
-		for (muint z = 0; z < nx - 1; z++)
+		for (muint z = 0; z < nz - 1; z++)
 		{
 			for (muint y = 0; y < ny - 1; y++)
 			{
-				for (muint x = 0; x < nz - 1; x++)
+				for (muint x = 0; x < nx - 1; x++)
 				{
 					vs[0] = field[mc_internalToIndex1D(x, y, z, size)];
 					vs[1] = field[mc_internalToIndex1D(x + 1, y, z, size)];
