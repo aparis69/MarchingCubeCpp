@@ -230,7 +230,8 @@ namespace MC
 	/*!
 	\brief Computes the mesh representing the zero isosurface of a 3D scalarfield and
 	 outputs it to an indexed mesh.
-	\param field scalarfield of real values
+	\param field scalarfield of real values in C-contiguous order: the value for grid point
+	 (ix, iy, iz) is stored at index (iz*ny + iy)*nx + ix
 	\param nx, ny, nz grid dimension
 	\param outputMesh indexed mesh returned.
 	*/
