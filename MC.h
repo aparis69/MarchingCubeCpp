@@ -230,7 +230,8 @@ namespace MC
 	/*!
 	\brief Computes the mesh representing the zero isosurface of a 3D scalarfield and
 	 outputs it to an indexed mesh.
-	\param field scalarfield of real values
+	\param field scalarfield of real values in C-contiguous order: the value for grid point
+	 (ix, iy, iz) is stored at index (iz*ny + iy)*nx + ix
 	\param nx, ny, nz grid dimension
 	\param outputMesh indexed mesh returned.
 	*/
@@ -244,11 +245,11 @@ namespace MC
 		mcVec3i* slab_inds = new mcVec3i[nx * ny * 2];
 		MC_FLOAT vs[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 		muint edge_indices[12];
-		for (muint z = 0; z < nx - 1; z++)
+		for (muint z = 0; z < nz - 1; z++)
 		{
 			for (muint y = 0; y < ny - 1; y++)
 			{
-				for (muint x = 0; x < nz - 1; x++)
+				for (muint x = 0; x < nx - 1; x++)
 				{
 					vs[0] = field[mc_internalToIndex1D(x, y, z, size)];
 					vs[1] = field[mc_internalToIndex1D(x + 1, y, z, size)];
