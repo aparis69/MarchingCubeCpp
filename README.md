@@ -18,7 +18,7 @@ You can optionally enable double precision by defining MC_CPP_USE_DOUBLE_PRECISI
 
 ## Use
 First define MC_CPP_ENABLE and then include MC.h in your project. Example:
-```
+```cpp
 #define MC_IMPLEM_ENABLE
 #include "MC.h"
 
