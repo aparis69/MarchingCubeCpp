@@ -48,15 +48,15 @@ namespace MC
 	static inline mcVec3f mc_internalNormalize(const mcVec3f& v)
 	{
 		MC_FLOAT vv = mc_internalLength(v);
-		return mcVec3f({ v.x / vv, v.y / vv, v.z / vv });
+		return mcVec3f({{{ v.x / vv, v.y / vv, v.z / vv }}});
 	}
 	static inline mcVec3f mc_internalCross(const mcVec3f& v1, const mcVec3f& v2)
 	{
-		return mcVec3f({ v1.y * v2.z - v1.z * v2.y, v1.z * v2.x - v1.x * v2.z, v1.x * v2.y - v1.y * v2.x });
+		return mcVec3f({{{ v1.y * v2.z - v1.z * v2.y, v1.z * v2.x - v1.x * v2.z, v1.x * v2.y - v1.y * v2.x }}});
 	}
 	inline mcVec3f operator-(const mcVec3f& l, const mcVec3f r)
 	{
-		return mcVec3f({ l.x - r.x, l.y - r.y, l.z - r.z });
+		return mcVec3f({{{ l.x - r.x, l.y - r.y, l.z - r.z }}});
 	}
 
 	typedef struct mcVec3i
