@@ -187,11 +187,11 @@ namespace MC
 	{
 		if ((va < 0.0) == (vb < 0.0))
 			return;
-		mcVec3f v = { MC_FLOAT(x), MC_FLOAT(y), MC_FLOAT(z) };
+		mcVec3f v = {{{ MC_FLOAT(x), MC_FLOAT(y), MC_FLOAT(z) }}};
 		v[axis] += va / (va - vb);
 		slab_inds[mc_internalToIndex1DSlab(x, y, z, size)][axis] = muint(mesh.vertices.size());
 		mesh.vertices.push_back(v);
-		mesh.normals.push_back(mcVec3f({ 0, 0, 0 }));
+		mesh.normals.push_back(mcVec3f({{{ 0, 0, 0 }}}));
 	}
 
 	/*!
@@ -241,7 +241,7 @@ namespace MC
 		outputMesh.normals.reserve(defaultNormalArraySize);
 		outputMesh.indices.reserve(defaultTriangleArraySize);
 
-		const mcVec3i size = { nx, ny, nz };
+		const mcVec3i size = {{{ nx, ny, nz }}};
 		mcVec3i* slab_inds = new mcVec3i[nx * ny * 2];
 		MC_FLOAT vs[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 		muint edge_indices[12];
