@@ -183,7 +183,7 @@ namespace MC
 	\param x, y, z current slab index
 	\param size slab indices array size
 	*/
-	static void mc_internalComputeEdge(mcVec3i* slab_inds, mcMesh& mesh, float va, float vb, int axis, muint x, muint y, muint z, const mcVec3i& size)
+	static void mc_internalComputeEdge(mcVec3i* slab_inds, mcMesh& mesh, MC_FLOAT va, MC_FLOAT vb, int axis, muint x, muint y, muint z, const mcVec3i& size)
 	{
 		if ((va < 0.0) == (vb < 0.0))
 			return;
