@@ -44,4 +44,4 @@ You may find a complete example in main.cpp file. Running the program in the rep
 the isosurface of a single perlin noise octave.
 
 ## Licence
-Double Licence, whatever fits you best: Public domain or MIT License.
+Double Licence, whatever fits you best: Public domain or MIT License. See [LICENSE](LICENSE) file.
